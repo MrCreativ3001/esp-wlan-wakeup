@@ -126,9 +126,10 @@ bool isWolPacket(const uint8_t* buffer, size_t bufferSize, MAC mac) {
 
 void setupPowerOn() {
     pinMode(D0, OUTPUT);
-    digitalWrite(D0, HIGH);
+    digitalWrite(D0, LOW);
 
     pinMode(LED_BUILTIN, OUTPUT);
+    // HIGH = powered off
     digitalWrite(LED_BUILTIN, HIGH);
 }
 void powerOn() {
