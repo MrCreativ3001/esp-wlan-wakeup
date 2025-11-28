@@ -17,7 +17,6 @@ MAC MAC_ADDRESS = {0xD8, 0x3B, 0xBF, 0xE5, 0x6C, 0xD0};
 #define WOL_PORT 9
 // --- End Configuration
 
-void setupPowerOn();
 void powerOn();
 bool isWolPacket(const uint8_t*, size_t, MAC);
 
@@ -26,6 +25,14 @@ void printBytes(const uint8_t*, size_t);
 #endif
 
 WiFiUDP listen = WiFiUDP();
+
+// Pins: https://www.wemos.cc/en/latest/d1/d1_mini_lite.html
+
+// Power SW pin, the pin that turns the PC on
+static const u_int8_t POWER_SW_PIN = D7;
+// Power LED pin, the pin that shows if the PC is currently turned on, needs to
+// be a INPUT_PULLUP pin
+static const u_int8_t POWER_ON_PIN = D3;
 
 #define WAKE_PACKET_LENGTH 102
 uint8_t packetBuffer[WAKE_PACKET_LENGTH];
@@ -36,8 +43,11 @@ void setup() {
     Serial.begin(9600);
 #endif
 
-    // Initialize built in led
-    setupPowerOn();
+    // Initialize pins
+    pinMode(POWER_SW_PIN, OUTPUT);
+    digitalWrite(POWER_SW_PIN, LOW);
+
+    pinMode(POWER_ON_PIN, INPUT_PULLUP);
 
     // Setup Wifi
     WiFi.mode(WIFI_STA);
@@ -64,6 +74,27 @@ void setup() {
         delay(1000);
         ESP.restart();
     }
+}
+
+void powerOn() {
+    // Note: this is a pull up -> LOW = on, HIGH = off
+    bool isOn = digitalRead(POWER_ON_PIN) == LOW;
+    if (isOn) {
+#ifdef DEBUG
+        Serial.println("Cancelling Wake: PC already turned on");
+#endif
+        return;
+    }
+
+#ifdef DEBUG
+    Serial.println("Wake");
+#endif
+
+    digitalWrite(POWER_SW_PIN, HIGH);
+
+    delay(1000);
+
+    digitalWrite(POWER_SW_PIN, LOW);
 }
 
 void loop() {
@@ -122,28 +153,6 @@ bool isWolPacket(const uint8_t* buffer, size_t bufferSize, MAC mac) {
 #endif
 
     return true;
-}
-
-void setupPowerOn() {
-    pinMode(D0, OUTPUT);
-    digitalWrite(D0, LOW);
-
-    pinMode(LED_BUILTIN, OUTPUT);
-    // HIGH = powered off
-    digitalWrite(LED_BUILTIN, HIGH);
-}
-void powerOn() {
-#ifdef DEBUG
-    Serial.println("Wake");
-#endif
-
-    digitalWrite(D0, HIGH);
-    digitalWrite(LED_BUILTIN, LOW);
-
-    delay(1000);
-
-    digitalWrite(D0, LOW);
-    digitalWrite(LED_BUILTIN, HIGH);
 }
 
 #ifdef DEBUG
