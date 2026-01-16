@@ -32,7 +32,7 @@ WiFiUDP listen = WiFiUDP();
 static const u_int8_t POWER_SW_PIN = D7;
 // Power LED pin, the pin that shows if the PC is currently turned on, needs to
 // be a INPUT_PULLUP pin
-static const u_int8_t POWER_ON_PIN = D3;
+static const u_int8_t POWER_ON_PIN = D4;
 
 #define WAKE_PACKET_LENGTH 102
 uint8_t packetBuffer[WAKE_PACKET_LENGTH];
@@ -41,6 +41,7 @@ void setup() {
 #ifdef DEBUG
     // For debugging
     Serial.begin(9600);
+    Serial.println("Starting");
 #endif
 
     // Initialize pins
@@ -49,8 +50,12 @@ void setup() {
 
     pinMode(POWER_ON_PIN, INPUT_PULLUP);
 
+#ifdef DEBUG
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);
+#endif
+
     // Setup Wifi
-    WiFi.mode(WIFI_STA);
     WiFi.setAutoReconnect(true);
     WiFi.begin(ssid, password);
 
@@ -91,10 +96,16 @@ void powerOn() {
 #endif
 
     digitalWrite(POWER_SW_PIN, HIGH);
+#ifdef DEBUG
+    digitalWrite(LED_BUILTIN, LOW);
+#endif
 
     delay(1000);
 
     digitalWrite(POWER_SW_PIN, LOW);
+#ifdef DEBUG
+    digitalWrite(LED_BUILTIN, HIGH);
+#endif
 }
 
 void loop() {
